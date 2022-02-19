@@ -18,12 +18,12 @@ data class User(
     val selectedCurrency: Currency,
 
     @Column("email")
-    val email: String,
+    override val email: String,
 
     @Column("password_hash")
-    val passwordHash: String,
+    override val password: String,
 
     @Column("user_role")
-    val role: Role,
-)
+    override val role: Role,
+) : UserCredentials
 

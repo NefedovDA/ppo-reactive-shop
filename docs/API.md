@@ -147,7 +147,7 @@ No such product
 }
 ```
 
-### Endpoint `/products/` (PUSH)
+### Endpoint `/products/` (POST)
 
 Authorized access, ADMIN required
 
