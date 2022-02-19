@@ -243,7 +243,7 @@ Ok!
 
 ```json
 {
-  "id": "number"
+  "token": "string"
 }
 ```
 

@@ -1,7 +1,7 @@
 package ru.diamant.rabbit.reactiveShop.domain
 
 import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.security.core.userdetails.User as SecurityUser
+import ru.diamant.rabbit.reactiveShop.security.SecurityUser
 
 interface UserCredentials {
     val email: String
