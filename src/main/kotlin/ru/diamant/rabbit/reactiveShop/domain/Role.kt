@@ -3,6 +3,7 @@ package ru.diamant.rabbit.reactiveShop.domain
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 
+
 object Authority {
     const val USER = "USER"
     const val ADMIN = "ADMIN"

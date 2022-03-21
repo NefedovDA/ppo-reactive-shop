@@ -36,7 +36,7 @@ dependencies {
     compileOnly("org.springframework:spring-jdbc")
 
 
-    runtimeOnly("io.r2dbc:r2dbc-postgresql")
+    implementation("io.r2dbc:r2dbc-postgresql")
     runtimeOnly("org.postgresql:postgresql")
 
 

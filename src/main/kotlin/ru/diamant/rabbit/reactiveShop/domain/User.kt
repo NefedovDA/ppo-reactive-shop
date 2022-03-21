@@ -5,25 +5,21 @@ import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
 
-@Table("users")
+@Table("authority.users")
 data class User(
     @Id
     @Column("user_id")
-    val id: Long,
+    val id: Long?,
 
-    @Column("full_name")
-    val fullName: String,
+    @Column("login")
+    val login: String,
 
-    @Column("selected_currency")
-    val selectedCurrency: Currency,
+    @Column("password")
+    val password: String,
 
-    @Column("email")
-    override val email: String,
+    @Column("role")
+    val role_name: String,
+)
 
-    @Column("password_hash")
-    override val password: String,
-
-    @Column("user_role")
-    override val role: Role,
-) : UserCredentials
-
+val User.role: Role
+    get() = Role.valueOf(role_name)

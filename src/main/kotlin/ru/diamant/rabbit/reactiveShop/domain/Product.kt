@@ -4,11 +4,11 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
-@Table("products")
+@Table("shop.products")
 data class Product(
     @Id
     @Column("product_id")
-    val id: Long,
+    val id: Long?,
 
     @Column("title")
     val title: String,
@@ -16,9 +16,15 @@ data class Product(
     @Column("description")
     val description: String,
 
-    @Column("amount")
-    val amount: String,
+    @Column("price_amount")
+    val price_amount: Long,
 
-    @Column("price")
-    val price: String
+    @Column("price_currency")
+    val price_currency: String,
+
+    @Column("user_id")
+    val ownerId: Long
 )
+
+val Product.price: Price
+    get() = Price(price_amount, Currency.valueOf(price_currency))

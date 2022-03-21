@@ -7,5 +7,5 @@ import ru.diamant.rabbit.reactiveShop.domain.User
 
 @Repository
 interface UserRepository : ReactiveCrudRepository<User, Long> {
-    fun findByEmail(email: String): Mono<User>
+    fun findByLogin(login: String): Mono<User>
 }

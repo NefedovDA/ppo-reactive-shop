@@ -11,16 +11,15 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
-import org.springframework.security.crypto.factory.PasswordEncoderFactories
+import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
 import reactor.core.publisher.Mono
 import ru.diamant.rabbit.reactiveShop.domain.Authority
-import ru.diamant.rabbit.reactiveShop.domain.User
-import ru.diamant.rabbit.reactiveShop.domain.details
 import ru.diamant.rabbit.reactiveShop.repository.UserRepository
 import ru.diamant.rabbit.reactiveShop.security.SecurityMode
+import ru.diamant.rabbit.reactiveShop.security.UserDetails
 import ru.diamant.rabbit.reactiveShop.security.jwt.JwtTokenAuthenticationFilter
 
 
@@ -59,20 +58,18 @@ class SecurityConfiguration {
                 spec
                     .pathMatchers("/favicon.ico").permitAll()
 
-                    .pathMatchers(HttpMethod.GET, "/me").hasAuthority(Authority.USER)
-                    .pathMatchers(HttpMethod.PUT, "/me/currency").hasAuthority(Authority.USER)
+                    .pathMatchers(HttpMethod.POST, "/api/v1/auth/create").permitAll()
+                    .pathMatchers(HttpMethod.POST, "/api/v1/auth/token").permitAll()
 
-                    .pathMatchers(HttpMethod.GET, "/products").hasAuthority(Authority.USER)
-                    .pathMatchers(HttpMethod.GET, "/products/*").hasAuthority(Authority.USER)
-                    .pathMatchers(HttpMethod.POST, "/products").hasAuthority(Authority.ADMIN)
-                    .pathMatchers(HttpMethod.PUT, "/products/*/amount").hasAuthority(Authority.ADMIN)
+                    .pathMatchers(HttpMethod.GET, "/api/v1/users").permitAll()
+                    .pathMatchers(HttpMethod.GET, "/api/v1/users/*").permitAll()
+                    .pathMatchers(HttpMethod.POST, "/api/v1/users/*/role").hasAuthority(Authority.OWNER)
 
-                    .pathMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                    .pathMatchers(HttpMethod.POST, "/auth/token").permitAll()
-
-                    .pathMatchers(HttpMethod.GET, "/users").hasAuthority(Authority.ADMIN)
-                    .pathMatchers(HttpMethod.GET, "/users/*").hasAuthority(Authority.ADMIN)
-                    .pathMatchers(HttpMethod.PUT, "/users/*/role").hasAuthority(Authority.OWNER)
+                    .pathMatchers(HttpMethod.GET, "/api/v1/products").permitAll()
+                    .pathMatchers(HttpMethod.GET, "/api/v1/products/*").permitAll()
+                    .pathMatchers(HttpMethod.POST, "/api/v1/products").hasAuthority(Authority.USER)
+                    .pathMatchers(HttpMethod.PUT, "/api/v1/products/*").hasAuthority(Authority.USER)
+                    .pathMatchers(HttpMethod.DELETE, "/api/v1/products/*").hasAuthority(Authority.USER)
 
                     .anyExchange().let { access ->
                         when (securityMode) {
@@ -88,14 +85,15 @@ class SecurityConfiguration {
 
 
     @Bean
-    fun userDetailsService(users: UserRepository): ReactiveUserDetailsService =
+    fun userDetailsService(userRepository: UserRepository): ReactiveUserDetailsService =
         ReactiveUserDetailsService { email ->
-            users.findByEmail(email).map(User::details)
+            userRepository.findByLogin(email).map(::UserDetails)
         }
 
     @Bean
+    @Suppress("DEPRECATION")
     fun passwordEncoder(): PasswordEncoder =
-        PasswordEncoderFactories.createDelegatingPasswordEncoder()
+        NoOpPasswordEncoder.getInstance()
 
     @Bean
     fun reactiveAuthenticationManager(
