@@ -67,9 +67,15 @@ class SecurityConfiguration {
 
                     .pathMatchers(HttpMethod.GET, "/api/v1/products").permitAll()
                     .pathMatchers(HttpMethod.GET, "/api/v1/products/*").permitAll()
+                    .pathMatchers(HttpMethod.GET, "/api/v1/products/owner_id/*").permitAll()
                     .pathMatchers(HttpMethod.POST, "/api/v1/products").hasAuthority(Authority.USER)
                     .pathMatchers(HttpMethod.PUT, "/api/v1/products/*").hasAuthority(Authority.USER)
                     .pathMatchers(HttpMethod.DELETE, "/api/v1/products/*").hasAuthority(Authority.USER)
+
+                    .pathMatchers(HttpMethod.GET, "/api/v1/me/config").hasAuthority(Authority.USER)
+                    .pathMatchers(HttpMethod.POST, "/api/v1/me/config").hasAuthority(Authority.USER)
+                    .pathMatchers(HttpMethod.PUT, "/api/v1/me/config").hasAuthority(Authority.USER)
+                    .pathMatchers(HttpMethod.DELETE, "/api/v1/me/config").hasAuthority(Authority.USER)
 
                     .anyExchange().let { access ->
                         when (securityMode) {

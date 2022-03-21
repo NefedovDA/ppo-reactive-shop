@@ -41,6 +41,6 @@ class RestUsers(
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
             .filter { it.role != Role.OWNER }
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.FORBIDDEN)))
-            .flatMap { userRepository.save(it.copy(role_name = jsonRole.role.name)) }
+            .flatMap { userRepository.save(it.copy(roleName = jsonRole.role.name)) }
             .then()
 }

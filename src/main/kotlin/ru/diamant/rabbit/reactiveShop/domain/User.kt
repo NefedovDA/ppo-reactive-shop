@@ -4,7 +4,6 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
-
 @Table("authority.users")
 data class User(
     @Id
@@ -18,8 +17,8 @@ data class User(
     val password: String,
 
     @Column("role")
-    val role_name: String,
+    val roleName: String,
 )
 
 val User.role: Role
-    get() = Role.valueOf(role_name)
+    get() = Role.valueOf(roleName)

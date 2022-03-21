@@ -17,14 +17,14 @@ data class Product(
     val description: String,
 
     @Column("price_amount")
-    val price_amount: Long,
+    val priceAmount: Long,
 
     @Column("price_currency")
-    val price_currency: String,
+    val priceCurrencyName: String,
 
     @Column("user_id")
     val ownerId: Long
 )
 
 val Product.price: Price
-    get() = Price(price_amount, Currency.valueOf(price_currency))
+    get() = Price(priceAmount, Currency.valueOf(priceCurrencyName))

@@ -31,7 +31,7 @@ class RestAuthority(
                     id = null,
                     login = userCredentials.login,
                     password = passwordEncoder.encode(userCredentials.password),
-                    role_name = Role.USER.name
+                    roleName = Role.USER.name
                 )
             )
             .onErrorResume(DataIntegrityViolationException::class.java) {

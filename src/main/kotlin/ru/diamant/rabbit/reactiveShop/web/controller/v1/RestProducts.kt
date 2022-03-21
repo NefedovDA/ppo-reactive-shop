@@ -3,7 +3,6 @@ package ru.diamant.rabbit.reactiveShop.web.controller.v1
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -15,10 +14,13 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import ru.diamant.rabbit.reactiveShop.domain.Authority
 import ru.diamant.rabbit.reactiveShop.domain.Product
+import ru.diamant.rabbit.reactiveShop.domain.defaultCurrency
 import ru.diamant.rabbit.reactiveShop.repository.ProductRepository
+import ru.diamant.rabbit.reactiveShop.repository.UserConfigRepository
+import ru.diamant.rabbit.reactiveShop.security.isAdmin
 import ru.diamant.rabbit.reactiveShop.security.user
+import ru.diamant.rabbit.reactiveShop.service.CurrencyConverterService
 import ru.diamant.rabbit.reactiveShop.web.controller.v1.json.JsonProductInfo
 import ru.diamant.rabbit.reactiveShop.web.controller.v1.json.JsonProductNew
 import ru.diamant.rabbit.reactiveShop.web.controller.v1.json.JsonProductUpdate
@@ -26,20 +28,28 @@ import ru.diamant.rabbit.reactiveShop.web.controller.v1.json.JsonProductUpdate
 @RestController
 @RequestMapping("/api/v1/products")
 class RestProducts(
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val userConfigRepository: UserConfigRepository,
+    private val currencyConverterService: CurrencyConverterService,
 ) {
     @GetMapping
-    fun getAll(): Flux<JsonProductInfo> =
+    fun getAll(authentication: Authentication?): Flux<JsonProductInfo> =
         productRepository
             .findAll()
-            .map { JsonProductInfo(it) }
+            .flatMap { constructJsonProductInfo(authentication, it) }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable("id") id: Long): Mono<JsonProductInfo> =
+    fun getById(authentication: Authentication?, @PathVariable("id") id: Long): Mono<JsonProductInfo> =
         productRepository
             .findById(id)
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
-            .map { JsonProductInfo(it) }
+            .flatMap { constructJsonProductInfo(authentication, it) }
+
+    @GetMapping("/owner_id/{id}")
+    fun getByOwnerId(authentication: Authentication?, @PathVariable("id") id: Long): Flux<JsonProductInfo> =
+        productRepository
+            .findByOwnerId(id)
+            .flatMap { constructJsonProductInfo(authentication, it) }
 
     @PostMapping
     fun createProduct(
@@ -52,8 +62,8 @@ class RestProducts(
                     id = null,
                     title = jsonProductNew.title,
                     description = jsonProductNew.description,
-                    price_amount = jsonProductNew.price.amount,
-                    price_currency = jsonProductNew.price.currency.name,
+                    priceAmount = jsonProductNew.price.amount,
+                    priceCurrencyName = jsonProductNew.price.currency.name,
                     ownerId = checkNotNull(authentication.user.id) { "Non BD user?" }
                 )
             )
@@ -78,8 +88,8 @@ class RestProducts(
                     it.copy(
                         title = jsonProductUpdate.title ?: it.title,
                         description = jsonProductUpdate.description ?: it.description,
-                        price_amount = jsonProductUpdate.price?.amount ?: it.price_amount,
-                        price_currency = jsonProductUpdate.price?.currency?.name ?: it.price_currency,
+                        priceAmount = jsonProductUpdate.price?.amount ?: it.priceAmount,
+                        priceCurrencyName = jsonProductUpdate.price?.currency?.name ?: it.priceCurrencyName,
                     )
                 )
             }
@@ -93,10 +103,19 @@ class RestProducts(
         productRepository
             .findById(id)
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
-            .filter {
-                SimpleGrantedAuthority(Authority.ADMIN) in authentication.authorities ||
-                        it.ownerId == authentication.user.id
-            }
+            .filter { authentication.isAdmin || it.ownerId == authentication.user.id }
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.FORBIDDEN)))
             .flatMap { productRepository.delete(it) }
+
+    private fun constructJsonProductInfo(authentication: Authentication?, product: Product): Mono<JsonProductInfo> {
+        val jsonProductInfo = JsonProductInfo(product)
+
+        authentication ?: return Mono.just(jsonProductInfo)
+
+        return userConfigRepository
+            .findById(checkNotNull(authentication.user.id) { "Non DB User?" })
+            .flatMap { currencyConverterService.convert(jsonProductInfo.price, it.defaultCurrency) }
+            .map { jsonProductInfo.copy(price = it) }
+            .switchIfEmpty(Mono.just(jsonProductInfo))
+    }
 }
